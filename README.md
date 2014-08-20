@@ -25,11 +25,11 @@ Setup (*IMPORTANT*)
 1. From within a new Google Spreadsheet file,
    open Tools -> Script editor...
 2. File -> New -> Project, and select
-   "Spreadsheet" under "Create a script".
+   "Blank Project" under "Create a script".
 3. Paste the code from
    [mkto_spreadsheet-lists.js]
    (https://raw.githubusercontent.com/khalstvedt/mkto_google-spreadsheet/master/mkto_spreadsheet-lists.js)
-   into the editor.
+   into the editor. Make sure you paste over any sample code in the editor.
 4. Configure the script by replacing the
    "REPLACE_ME" strings in the configuration
    section at the top with URL's/keys that
