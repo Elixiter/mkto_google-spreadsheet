@@ -11,7 +11,7 @@ This project is a work-in-progress. It is only minimally functional. Please salt
 Author information
 --------------------
 Kyle Halstvedt  
-Elixiter, Inc.  
+[Elixiter, Inc.](http://www.elixiter.com)  
 kyle@elixiter.com
 
 Setup (*IMPORTANT*)
