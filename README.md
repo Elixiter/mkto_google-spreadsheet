@@ -9,7 +9,6 @@ Kyle Halstvedt
 Elixiter, Inc.  
 August 20, 2014  
 kyle@elixiter.com
---------------------
 
 Setup (*IMPORTANT*)
 --------------------
@@ -26,7 +25,6 @@ Setup (*IMPORTANT*)
   If you have trouble with this, see
   Marketo's documentation at
   http://developers.marketo.com/documentation/rest/
---------------------
 
 Usage
 --------------------
@@ -37,10 +35,8 @@ Usage
   and IDs of the lists fetched from Marketo
 3. Each list has an "Insert" button. Click it to insert
   the members of the list.
---------------------
 
 Todo / Caveats
 --------------------
 1. Paginated API; currently only retrieves
   the first 100 results from a list.
---------------------
