@@ -40,6 +40,7 @@ Setup (*IMPORTANT*)
    (http://developers.marketo.com/documentation/rest/authentication/)
    and [the custom service]
    (http://developers.marketo.com/documentation/rest/custom-service/).
+5. Save the script with the floppy icon or File -> Save.
 
 Usage
 -----
@@ -47,12 +48,14 @@ Usage
    included, click the custom "Marketo Import"
    menu item, and click "Initialize sidebar...". If there
    is no menu item titled "Marketo Import", please make sure
-   you have followed all of the steps in Setup (and that
-   the script is present in the script editor for the
-   current document).
-2. A right-hand sidebar should appear with the names
+   you have followed all of the steps in Setup. In particular,
+   ensure that the script is present in the script editor for the
+   current document, and that you have filled in your API credentials.
+2. The first time you run it, you must give authorization to
+   make external http requests. Do so.
+3. A right-hand sidebar should appear with the names
    and IDs of the lists fetched from Marketo.
-3. Each list has an "Insert" button. Click it to insert
+4. Each list has an "Insert" button. Click it to insert
    the members of the list.
 
 Caveats / Todo
