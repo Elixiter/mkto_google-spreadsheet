@@ -1,7 +1,7 @@
 mkto_google-spreadsheet
 =======================
 
-![Marketo Lists in your Google Spreadsheet](http://cl.ly/image/2Q3p3S103G1k)
+![Marketo Lists in your Google Spreadsheet](http://f.cl.ly/items/3N0K442b433F0L1B163O/lists_in_spreadsheet.png)
 
 Import Marketo lists to Google Spreadsheet - and maybe one day, synchronize them - using the REST API and Google Apps Script.
 
