@@ -1,7 +1,7 @@
 mkto_google-spreadsheet
 =======================
 
-Note: _DO NOT POST YOUR API CREDENTIALS PUBLICALLY_
+Note: __DO NOT POST YOUR API CREDENTIALS PUBLICALLY__
 
 A work-in-progress collection of Google Apps Scripts for Marketo integration
 
@@ -45,4 +45,4 @@ Todo / Caveats
 2. Any user with enough priveleges to run the script
    would be able to *read* the script, which contains
    your REST API credentials (ID and secret key) in-the-clear.  
-   _DO NOT POST YOUR API CREDENTIALS PUBLICALLY_
+   __DO NOT POST YOUR API CREDENTIALS PUBLICALLY__
