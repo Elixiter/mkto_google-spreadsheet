@@ -1,7 +1,8 @@
 mkto_google-spreadsheet
 =======================
 
-Note: __DO NOT POST YOUR API CREDENTIALS PUBLICALLY__
+Note: __DO NOT POST YOUR API CREDENTIALS PUBLICALLY__  
+__You alone are responsible for the security of your API credentials__
 
 A work-in-progress collection of Google Apps Scripts for Marketo integration
 
