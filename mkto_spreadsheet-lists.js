@@ -146,6 +146,8 @@ function fetchList(id) {
 function insertList(list) {
   var spreadsheet = SpreadsheetApp.getActiveSpreadsheet();
   var sheet = spreadsheet.getActiveSheet();
+  sheet.appendRow(["ID", "Email", "First Name", "Last Name"]);
+  sheet.setFrozenRows(1); // freeze the first row into a header
   for (var entry in list) {
     var row = list[entry];
     sheet.appendRow([row.id, row.email, row.firstName, row.lastName]);
