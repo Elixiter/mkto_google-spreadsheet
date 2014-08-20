@@ -1,8 +1,9 @@
 mkto_google-spreadsheet
 =======================
 
-A repository of Google Apps Script for integrating with Marketo API's  
 Note: _DO NOT POST YOUR API CREDENTIALS PUBLICALLY_
+
+A work-in-progress collection of Google Apps Scripts for Marketo integration
 
 Author information
 --------------------
