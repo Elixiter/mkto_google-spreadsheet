@@ -22,15 +22,15 @@ Setup (*IMPORTANT*)
    open Tools -> Script editor...
 2. File -> New -> Project, and select
    "Spreadsheet" under "Create a script".
-3. Paste ALL of the code in this file into
-   the editor.
-4. CONFIGURE the script by replacing the
+3. Paste the code from
+   [mkto_spreadsheet-lists.js](https://raw.githubusercontent.com/khalstvedt/mkto_google-spreadsheet/master/mkto_spreadsheet-lists.js)
+   into the editor.
+4. Configure the script by replacing the
    "REPLACE_ME" strings in the configuration
    section at the top with URL's/keys that
    are specific to your Marketo instance.
    If you have trouble with this, see
-   Marketo's documentation:
-   http://developers.marketo.com/documentation/rest/
+   [Marketo's documentation:](http://developers.marketo.com/documentation/rest/)
 
 Usage
 -----
@@ -44,9 +44,10 @@ Usage
 
 Todo / Caveats
 --------------
-1. Paginated API; currently only retrieves
-  the first 100 results from a list.
+1. The REST API is paginated, and this script does not even bother;
+   it currently only retrieves the first page from a list
+   (first 100 results).
 2. Any user with enough priveleges to run the script
-   would be able to *read* the script, which contains
+   is able to *read* the script, which contains
    your REST API credentials (ID and secret key) in-the-clear.  
-   __DO NOT POST YOUR API CREDENTIALS PUBLICALLY!__
+   **DO NOT POST YOUR API CREDENTIALS PUBLICALLY!**
