@@ -30,7 +30,7 @@ Setup (*IMPORTANT*)
    section at the top with URL's/keys that
    are specific to your Marketo instance.
    If you have trouble with this, see
-   [Marketo's documentation:](http://developers.marketo.com/documentation/rest/)
+   [Marketo's documentation](http://developers.marketo.com/documentation/rest/).
 
 Usage
 -----
