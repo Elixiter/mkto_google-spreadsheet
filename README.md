@@ -3,7 +3,9 @@ mkto_google-spreadsheet
 
 ![Marketo Lists in your Google Spreadsheet](http://f.cl.ly/items/3N0K442b433F0L1B163O/lists_in_spreadsheet.png)
 
-Import Marketo lists to Google Spreadsheet - and maybe one day, keep them up-to-date - using the [REST API](http://developers.marketo.com/documentation/rest/) and [Google Apps Script](https://developers.google.com/apps-script/).
+Import Marketo lists to Google Spreadsheet - and maybe one day, keep them up-to-date - 
+using the [REST API](http://developers.marketo.com/documentation/rest/) and 
+[Google Apps Script](https://developers.google.com/apps-script/).
 
 **NOTE: DO NOT POST YOUR API CREDENTIALS PUBLICALLY!**  
 **You alone are responsible for the security of your API credentials.**
@@ -23,14 +25,17 @@ Setup (*IMPORTANT*)
 2. File -> New -> Project, and select
    "Spreadsheet" under "Create a script".
 3. Paste the code from
-   [mkto_spreadsheet-lists.js](https://raw.githubusercontent.com/khalstvedt/mkto_google-spreadsheet/master/mkto_spreadsheet-lists.js)
+   [mkto_spreadsheet-lists.js]
+   (https://raw.githubusercontent.com/khalstvedt/mkto_google-spreadsheet/master/mkto_spreadsheet-lists.js)
    into the editor.
 4. Configure the script by replacing the
    "REPLACE_ME" strings in the configuration
    section at the top with URL's/keys that
    are specific to your Marketo instance.
    If you have trouble with this, see
-   [Marketo's documentation](http://developers.marketo.com/documentation/rest/).
+   [Marketo's documentation](http://developers.marketo.com/documentation/rest/),
+   specifically the sections on [authentication](http://developers.marketo.com/documentation/rest/authentication/)
+   and [the custom service](http://developers.marketo.com/documentation/rest/custom-service/).
 
 Usage
 -----
