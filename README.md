@@ -5,9 +5,9 @@ A repository of Google Apps Script for integrating with Marketo API's
 
 Author information
 --------------------
-Kyle Halstvedt
-Elixiter, Inc.
-August 20, 2014
+Kyle Halstvedt  
+Elixiter, Inc.  
+August 20, 2014  
 kyle@elixiter.com
 --------------------
 
