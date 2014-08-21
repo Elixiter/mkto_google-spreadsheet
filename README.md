@@ -11,7 +11,9 @@ using the [REST API](http://developers.marketo.com/documentation/rest/) and
 **NOTE: DO NOT POST YOUR API CREDENTIALS PUBLICALLY!**  
 **You alone are responsible for the security of your API credentials.**
 
-This project is a work-in-progress. It is only minimally functional.
+This project is a work-in-progress. It is intended for the "new"
+version of Google Spreadsheet (green check in bottom bar).
+It is only minimally functional.
 Please salt heavily, and see the Caveats / Todo section at the bottom of this README.
 
 Author information
@@ -52,20 +54,21 @@ Usage
    ensure that the script is present in the script editor for the
    current document, and that you have filled in your API credentials.
 2. The first time you run it, you must give authorization to
-   make external http requests. Do so.
+   make external http requests.
 3. A right-hand sidebar should appear with the names
    and IDs of the lists fetched from Marketo.
 4. Each list has an "Insert" button. Click it to insert
-   the members of the list.
+   all members of the list.
 
 Caveats / Todo
 --------------
-1. The REST API is paginated, and this script does not even bother to walk through
-   the pages; it currently only retrieves the first page from a list
-   (first 100 results). This feature is upcoming.
-2. The script does not attempt to "update" or "synchronize" the lists,
-   it currently only appends to the bottom of your sheet. This feature is
+1. The script does not attempt to "update" or "synchronize" the lists,
+   it currently only appends to a blank sheet. This feature is
    planned.
+2. If you exceed the API quota of 100 requests per 20 seconds, you will receive
+   an error message. This script does not currently support fetching lists
+   of greater than 10k leads, as it has no regulator to prevent reaching
+   the API limit and no way to resume fetching a list in the middle.
 3. Any user with enough priveleges to run the script
    is able to *read* the script, which contains
    your REST API credentials (ID and secret key) in-the-clear.  
