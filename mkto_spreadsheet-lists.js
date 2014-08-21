@@ -47,16 +47,20 @@
 
 // Caveats / Todo
 // --------------
-// 1. The script does not attempt to "update" or "synchronize" the lists,
-//    it currently only appends to a blank sheet. This feature is
-//    planned.
-// 2. Currently, you can only fetch the first 100 lists in the sidebar. Fetching all
+// 1. Currently, you can only fetch the first 100 lists in the sidebar. Fetching all
 //    lists is an upcoming feature.
-// 3. If you exceed the API quota of 100 requests per 20 seconds, you will receive
+// 2. The script does not attempt to "update" or "synchronize" the lists,
+//    it currently only appends to a blank sheet.
+//    Updating lists is a planned feature.
+// 3. I am using the atomic Sheet.appendRow() method to add each row, which is safe
+//    but slow. Planned migration to Range.setValues() for performance.
+// 4. If you exceed the API quota of 100 requests per 20 seconds, you will receive
 //    an error message. This script does not currently support fetching lists
 //    of greater than 10k leads, as it has no regulator to prevent reaching
 //    the API limit and no way to resume fetching a list in the middle.
-// 4. Any user with enough priveleges to run the script
+// 5. The UX is quite poor: there are no status or loading indicators. Improving
+//    this is on the long-term roadmap.
+// 6. Any user with enough priveleges to run the script
 //    is able to *read* the script, which contains
 //    your REST API credentials (ID and secret key) in-the-clear.  
 //    **DO NOT POST YOUR API CREDENTIALS PUBLICALLY!**
@@ -75,7 +79,6 @@ var consumerSecret = 'REPLACE_ME'; // Marketo REST API client secret
 
 // when the document is opened, create the top menu
 function onOpen() {
-  var spreadsheet = SpreadsheetApp.getActiveSpreadsheet();
   var ui = SpreadsheetApp.getUi();
   var menu = ui.createMenu('Marketo Import');
   menu.addItem('Initialize sidebar...', 'initializeSidebar');
@@ -90,6 +93,8 @@ function initializeSidebar() {
 // END: initializeSidebar()
 
 // fetch list names from the REST API
+// CAVEAT: returns only the first 100 lists
+// TODO: recurse to fetch all lists
 function fetchLists() {
   var listsArray = [];
   var bearerToken = JSON.parse(
@@ -268,17 +273,14 @@ function fetchAndInsertListR(args) {
 	  lastName: parsedResponse.result[n].lastName
 	});
       }
-      // add it to the previous array
-      // OR insert it into the spreadsheet
-      //listArray = args.listArray.concat(listArray);
+      // insert array directly into the spreadsheet
       insertList(listArray);
       // ...and recurse
       fetchAndInsertListR({ id: args.id, nextPage: parsedResponse.nextPageToken, listArray: listArray, bearerToken: args.bearerToken });
     }
     // done recursing, return
     else {
-      insertList(listArray);
-      return true;
+      insertList(listArray); // add last batch
     }
   }
 }
