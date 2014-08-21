@@ -120,7 +120,7 @@ function fetchLists() {
 // create sidebar to display list names and ID's
 // also includes 'insert' button to copy the list to the current spreadsheet
 function createSidebar(listsArray) {
-  var app = UiApp.createApplication().setTitle('Marketo Lists');
+  var app = UiApp.createApplication().setTitle('Marketo Lists (first 100 only)');
   var scroll = app.createScrollPanel().setHeight('100%').setWidth('100%');
   var vertical = app.createVerticalPanel();
   // for each item in lists array, create sidebar element
