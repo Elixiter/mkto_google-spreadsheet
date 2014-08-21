@@ -88,7 +88,7 @@ function fetchLists() {
   var response = UrlFetchApp.fetch(requestUrl);
   var parsedResponse = JSON.parse(response.getContentText());
   if (parsedResponse.success != true) {
-    throw new Error('The API request failed.');
+    throw new Error('The API request failed.' + '\n' + parsedResponse.errors[0].code + ' ' + parsedResponse.errors[0].message);
   }
   for (var n in parsedResponse.result) {
     listsArray.push({
@@ -133,21 +133,48 @@ function insertHeader() {
   sheet.appendRow(['ID', 'Email', 'First Name', 'Last Name']);
   sheet.setFrozenRows(1); // freeze the first row into a header
 }
+// END: insertHeader()
+
+function resizeColumns() {
+  var spreadsheet = SpreadsheetApp.getActiveSpreadsheet();
+  var sheet = spreadsheet.getActiveSheet();
+  sheet.autoResizeColumn(1).autoResizeColumn(2).autoResizeColumn(3).autoResizeColumn(4);
+}
+// END: resizeColumns()
 
 // handle click events from sidebar buttons
 // TODO:  create new sheet with list name
 function buttonHandler(eventInfo) {
-  insertHeader(); // insert top header to spreadsheet
-  var list = fetchList(eventInfo.parameter.source); // source is ID for button element; TODO: source object {id, name}
-  insertList(list); // insert list to spreadsheet
+  var id = eventInfo.parameter.source;
+  var spreadsheet = SpreadsheetApp.getActiveSpreadsheet();
+  var sheet = spreadsheet.getActiveSheet();
+  var range = sheet.getDataRange();
+  if (!range.isBlank()) {
+    throw new Error('You can only insert lists into an empty sheet.\nPlease create a new sheet and try again.');
+  }
+  else {
+    sheet.setName(id);
+    var bearerToken = JSON.parse(
+      UrlFetchApp.fetch(
+	identityUrl
+	+ 'oauth/token?grant_type=client_credentials&client_id='
+	+ consumerKey
+	+ '&client_secret='
+	+ consumerSecret
+      ).getContentText()
+    ).access_token;
+    insertHeader(); // insert top header to spreadsheet
+    fetchAndInsertListR({ id: id, nextPage: '', listArray: [], bearerToken: bearerToken }); // call recusive fetch; TODO: add list name to source object
+    resizeColumns();
+  }
 }
 // END: buttonHandler()
 
+// DEPRECATED, use fetchAndInsertListR()
 // retrieve list by ID from MKTO REST API
 // returns an array of objects with keys:
 //   id, email, firstName, lastName
 // only returns first page of 100 results
-// TODO: calls recursive subfunction
 function fetchList(id) {
   var listArray = [];
   // refresh the token
@@ -164,7 +191,7 @@ function fetchList(id) {
   var response = UrlFetchApp.fetch(requestUrl);
   var parsedResponse = JSON.parse(response.getContentText());
   if (parsedResponse.success != true) {
-    throw new Error('The API request failed.');
+    throw new Error('The API request failed.' + '\n' + parsedResponse.errors[0].code + ' ' + parsedResponse.errors[0].message);
   }
   for (var n in parsedResponse.result) {
     listArray.push({
@@ -184,7 +211,7 @@ function fetchList(id) {
 // if no nextPage is given, assume it's the
 //   first page and keep on fetching
 // args: {id, nextPage, listArray, bearerToken}
-function fetchAllLists(args) {
+function fetchAndInsertListR(args) {
   var args = args || {};
   args.id = args.id || -1;
   args.nextPage = args.nextPage || '';
@@ -204,15 +231,17 @@ function fetchAllLists(args) {
     // grab another page
     var listArray = [];
     var requestUrl = restEndpoint + 'v1/list/' + args.id + '/leads.json'
-    + '?access_token=' + args.bearerToken
-    + '&nextPageToken=' + args.nextPage;
+    + '?access_token=' + args.bearerToken;
+    if (args.nextPage != '') {
+      requestUrl += '&nextPageToken=' + args.nextPage;
+    }
     var response = UrlFetchApp.fetch(requestUrl);
     var parsedResponse = JSON.parse(response.getContentText());
     if (parsedResponse.success != true) {
-      throw new Error('The API request failed.');
+      throw new Error('The API request failed.' + '\n' + parsedResponse.errors[0].code + ' ' + parsedResponse.errors[0].message);
     }
     // if this page was not empty...
-    else if (parsedResponse.result != []) {
+    else if (parsedResponse.result.length > 0) {
       // construct the array from the response
       for (var n in parsedResponse.result) {
 	listArray.push({
@@ -227,15 +256,16 @@ function fetchAllLists(args) {
       //listArray = args.listArray.concat(listArray);
       insertList(listArray);
       // ...and recurse
-      fetchAllLists({ id: args.id, nextPage: parsedResponse.nextPageToken, listArray: listArray, bearerToken: args.bearerToken });
+      fetchAndInsertListR({ id: args.id, nextPage: parsedResponse.nextPageToken, listArray: listArray, bearerToken: args.bearerToken });
     }
     // done recursing, return
     else {
       insertList(listArray);
+      return true;
     }
   }
 }
-// END: keepFetching()
+// END: fetchAndInsertListR()
 
 // insert the contents of the list array
 //   into the currently-active sheet
