@@ -26,8 +26,8 @@ Setup (*IMPORTANT*)
 -------------------
 1. From within a new Google Spreadsheet file,
    open Tools -> Script editor...
-2. File -> New -> Project, and select
-   "Blank Project" under "Create a script".
+2. Create a new "Blank Project" from the wizard
+   or from File -> New.
 3. Paste the code from
    [mkto_spreadsheet-lists.js]
    (https://raw.githubusercontent.com/khalstvedt/mkto_google-spreadsheet/master/mkto_spreadsheet-lists.js)
