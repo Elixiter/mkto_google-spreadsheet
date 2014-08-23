@@ -11,11 +11,11 @@
 // -------------------
 // 1. From within a new Google Spreadsheet file,
 //    open Tools -> Script editor...
-// 2. File -> New -> Project, and select
-//    "Blank Project" under "Create a script".
+// 2. Create a new "Blank Project" from the wizard
+//    or from File -> New.
 // 3. Paste the code from
-//    [mkto_spreadsheet-lists.js]
-//    (https://raw.githubusercontent.com/khalstvedt/mkto_google-spreadsheet/master/mkto_spreadsheet-lists.js)
+//    [mkto_spreadsheet-lists.gs]
+//    (https://github.com/Elixiter/mkto_google-spreadsheet/blob/master/mkto_spreadsheet-lists.gs)
 //    into the editor. Make sure you paste over any sample code in the editor.
 // 4. Configure the script by replacing the
 //    "REPLACE_ME" strings in the configuration
@@ -47,23 +47,25 @@
 
 // Caveats / Todo
 // --------------
-// 1. Currently, you can only fetch the first 100 lists in the sidebar. Fetching all
-//    lists is an upcoming feature.
-// 2. The script does not attempt to "update" or "synchronize" the lists,
-//    it currently only appends to a blank sheet.
-//    Updating lists is a planned feature.
-// 3. I am using the atomic Sheet.appendRow() method to add each row, which is safe
-//    but slow. Planned migration to Range.setValues() for performance.
-// 4. If you exceed the API quota of 100 requests per 20 seconds, you will receive
-//    an error message. This script does not currently support fetching lists
-//    of greater than 10k leads, as it has no regulator to prevent reaching
-//    the API limit and no way to resume fetching a list in the middle.
-// 5. The UX is quite poor: there are no status or loading indicators. Improving
-//    this is on the long-term roadmap.
-// 6. Any user with enough priveleges to run the script
+// 1. Any user with enough priveleges to run the script
 //    is able to *read* the script, which contains
 //    your REST API credentials (ID and secret key) in-the-clear.  
 //    **DO NOT POST YOUR API CREDENTIALS PUBLICALLY!**
+// 2. Currently, you can only fetch the first 100 lists in the sidebar. Fetching all
+//    lists is an upcoming feature.
+// 3. The script does not attempt to "update" or "synchronize" the lists,
+//    it currently only appends to a blank sheet.
+//    Updating lists is a planned feature.
+// 4. I am using the atomic Sheet.appendRow() method to add each row, which is safe
+//    but slow. Planned migration to Range.setValues() for performance.
+// 5. If you exceed the API quota of 100 requests per 20 seconds, you will receive
+//    an error message. This script does not currently support fetching lists
+//    of greater than 10k leads, as it has no regulator to prevent reaching
+//    the API limit and no way to resume fetching a list in the middle.
+// 6. The UX is quite poor: there are no status or loading indicators. Improving
+//    this is on the long-term roadmap.
+// 7. I should really store the bearer token in a Hidden instead of passing it
+//    as an argument.
 
 // END: frontmatter
 // ==================================================
