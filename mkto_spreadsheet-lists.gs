@@ -125,27 +125,35 @@ function fetchLists() {
 // create sidebar to display list names and ID's
 // also includes 'insert' button to copy the list to the current spreadsheet
 function createSidebar(listsArray) {
-  var app = UiApp.createApplication().setTitle('Marketo Lists (first 100 only)');
-  var scroll = app.createScrollPanel().setHeight('100%').setWidth('100%');
+  var app = UiApp.createApplication()
+		 .setTitle('Marketo Lists (first 100 only)');
+  var scroll = app.createScrollPanel()
+		  .setHeight('100%')
+		  .setWidth('100%');
   var vertical = app.createVerticalPanel();
   // for each item in lists array, create sidebar element
   // each sidebar element is a HorizontalPanel with a button and two labels
   // entire sidebar is a ScrollPanel containing a VerticalPanel with HorizontalPanels
   for (var l in listsArray) {
     var horizontal = app.createHorizontalPanel();
-    var button = app.createButton('Insert').setId(listsArray[l].id); // set button ID to MKTO list ID
+    var button = app.createButton('Insert')
+		    .setId(listsArray[l].id); // set button ID to MKTO list ID
     var idLabel = app.createLabel(listsArray[l].id);
     var nameLabel = app.createLabel(listsArray[l].name);
     var handler = app.createServerHandler('buttonHandler'); // specify handler function
     button.addClickHandler(handler); // attach handler to button click event
-    horizontal.setVerticalAlignment(UiApp.VerticalAlignment.MIDDLE).setSpacing(10); // set panel format options
-    horizontal.add(button).add(idLabel).add(nameLabel); // add button and labels all at once
+    horizontal.setVerticalAlignment(UiApp.VerticalAlignment.MIDDLE)
+	      .setSpacing(10); // set panel format options
+    horizontal.add(button)
+	      .add(idLabel)
+	      .add(nameLabel); // add button and labels all at once
     vertical.add(horizontal);
   }
   // END: for (var l in listsArray)
   scroll.add(vertical);
   app.add(scroll);
-  SpreadsheetApp.getUi().showSidebar(app); // finally, display the sidebar
+  SpreadsheetApp.getUi()
+		.showSidebar(app); // finally, display the sidebar
 }
 // END: createSidebar()
 
