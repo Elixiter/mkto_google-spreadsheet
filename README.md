@@ -79,5 +79,6 @@ Caveats / Todo
    the API limit and no way to resume fetching a list in the middle.
 6. The UX is quite poor: there are no status or loading indicators. Improving
    this is on the long-term roadmap.
-7. I should really store the bearer token in a Hidden instead of passing it
-   as an argument.
+7. Yes, this started as as script, but adding UI components means future
+   development should really be more object-oriented. This reorganization will
+   likely occur before many features on the roadmap.
