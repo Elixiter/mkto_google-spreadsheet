@@ -270,7 +270,7 @@ function fetchAndInsertListR(args) {
     var response = UrlFetchApp.fetch(requestUrl);
     var parsedResponse = JSON.parse(response.getContentText());
     if (parsedResponse.success != true) {
-      throw new Error('The API request failed.' + '\n' + parsedResponse.errors[0].code + ' ' + parsedResponse.errors[0].message);
+      throw new Error('The API request failed.' + '\n' + parsedResponse.errors[0].code + '\n' + parsedResponse.errors[0].message);
     }
     // if this page was not empty...
     else if (parsedResponse.result.length > 0) {
@@ -286,11 +286,9 @@ function fetchAndInsertListR(args) {
       // insert array directly into the spreadsheet
       insertList(listArray);
       // ...and recurse
-      fetchAndInsertListR({ id: args.id, nextPage: parsedResponse.nextPageToken, listArray: listArray, bearerToken: args.bearerToken });
-    }
-    // done recursing, return
-    else {
-      insertList(listArray); // add last batch
+      if (parsedResponse.nextPageToken != undefined) {
+	fetchAndInsertListR({ id: args.id, nextPage: parsedResponse.nextPageToken, listArray: listArray, bearerToken: args.bearerToken });
+      }
     }
   }
 }
