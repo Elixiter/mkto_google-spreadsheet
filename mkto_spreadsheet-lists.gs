@@ -15,7 +15,7 @@
 //    or from File -> New.
 // 3. Paste the code from
 //    [mkto_spreadsheet-lists.gs]
-//    (https://github.com/Elixiter/mkto_google-spreadsheet/blob/master/mkto_spreadsheet-lists.gs)
+//    (https://raw.githubusercontent.com/Elixiter/mkto_google-spreadsheet/master/mkto_spreadsheet-lists.gs)
 //    into the editor. Make sure you paste over any sample code in the editor.
 // 4. Configure the script by replacing the
 //    "REPLACE_ME" strings in the configuration
@@ -100,19 +100,22 @@ function initializeSidebar() {
 function fetchLists() {
   var listsArray = [];
   var bearerToken = JSON.parse(
-    UrlFetchApp.fetch(
-      identityUrl
-      + 'oauth/token?grant_type=client_credentials&client_id='
-      + consumerKey
-      + '&client_secret='
-      + consumerSecret
-    ).getContentText()
-  ).access_token;
+    UrlFetchApp
+      .fetch(
+	identityUrl +
+	  'oauth/token?grant_type=client_credentials&client_id=' +
+	  consumerKey +
+	  '&client_secret=' +
+	  consumerSecret)
+      .getContentText())
+    .access_token;
   var requestUrl = restEndpoint + 'v1/lists.json' + '?access_token=' + bearerToken;
   var response = UrlFetchApp.fetch(requestUrl);
   var parsedResponse = JSON.parse(response.getContentText());
   if (parsedResponse.success != true) {
-    throw new Error('The API request failed.' + '\n' + parsedResponse.errors[0].code + ' ' + parsedResponse.errors[0].message);
+    throw new Error('The API request failed.' + '\n' +
+		    parsedResponse.errors[0].code + '\n' +
+		    parsedResponse.errors[0].message);
   }
   for (var n in parsedResponse.result) {
     listsArray.push({
@@ -127,35 +130,41 @@ function fetchLists() {
 // create sidebar to display list names and ID's
 // also includes 'insert' button to copy the list to the current spreadsheet
 function createSidebar(listsArray) {
-  var app = UiApp.createApplication()
-		 .setTitle('Marketo Lists (first 100 only)');
-  var scroll = app.createScrollPanel()
-		  .setHeight('100%')
-		  .setWidth('100%');
+  var app = UiApp
+    .createApplication()
+    .setTitle('Marketo Lists (first 100 only)');
+  var scroll = app
+    .createScrollPanel()
+    .setHeight('100%')
+    .setWidth('100%');
   var vertical = app.createVerticalPanel();
   // for each item in lists array, create sidebar element
   // each sidebar element is a HorizontalPanel with a button and two labels
   // entire sidebar is a ScrollPanel containing a VerticalPanel with HorizontalPanels
   for (var l in listsArray) {
     var horizontal = app.createHorizontalPanel();
-    var button = app.createButton('Insert')
-		    .setId(listsArray[l].id); // set button ID to MKTO list ID
+    var button = app
+      .createButton('Insert')
+      .setId(listsArray[l].id); // set button ID to MKTO list ID
     var idLabel = app.createLabel(listsArray[l].id);
     var nameLabel = app.createLabel(listsArray[l].name);
     var handler = app.createServerHandler('buttonHandler'); // specify handler function
     button.addClickHandler(handler); // attach handler to button click event
-    horizontal.setVerticalAlignment(UiApp.VerticalAlignment.MIDDLE)
-	      .setSpacing(10); // set panel format options
-    horizontal.add(button)
-	      .add(idLabel)
-	      .add(nameLabel); // add button and labels all at once
+    horizontal
+      .setVerticalAlignment(UiApp.VerticalAlignment.MIDDLE)
+      .setSpacing(10); // set panel format options
+    horizontal
+      .add(button)
+      .add(idLabel)
+      .add(nameLabel); // add button and labels all at once
     vertical.add(horizontal);
   }
   // END: for (var l in listsArray)
   scroll.add(vertical);
   app.add(scroll);
-  SpreadsheetApp.getUi()
-		.showSidebar(app); // finally, display the sidebar
+  SpreadsheetApp
+    .getUi()
+    .showSidebar(app); // finally, display the sidebar
 }
 // END: createSidebar()
 
@@ -170,7 +179,11 @@ function insertHeader() {
 function resizeColumns() {
   var spreadsheet = SpreadsheetApp.getActiveSpreadsheet();
   var sheet = spreadsheet.getActiveSheet();
-  sheet.autoResizeColumn(1).autoResizeColumn(2).autoResizeColumn(3).autoResizeColumn(4);
+  sheet
+    .autoResizeColumn(1)
+    .autoResizeColumn(2)
+    .autoResizeColumn(3)
+    .autoResizeColumn(4);
 }
 // END: resizeColumns()
 
@@ -182,22 +195,25 @@ function buttonHandler(eventInfo) {
   var sheet = spreadsheet.getActiveSheet();
   var range = sheet.getDataRange();
   if (!range.isBlank()) {
-    throw new Error('You can only insert lists into an empty sheet.\nPlease create a new sheet and try again.');
+    throw new Error('You can only insert lists into an empty sheet.' + '\n' +
+		    'Please create a new sheet and try again.');
   }
   else {
     sheet.setName(id);
     var bearerToken = JSON.parse(
-      UrlFetchApp.fetch(
-	identityUrl
-	+ 'oauth/token?grant_type=client_credentials&client_id='
-	+ consumerKey
-	+ '&client_secret='
-	+ consumerSecret
-      ).getContentText()
-    ).access_token;
+      UrlFetchApp
+	.fetch(
+	  identityUrl +
+	    'oauth/token?grant_type=client_credentials&client_id=' +
+	    consumerKey +
+	    '&client_secret=' +
+	    consumerSecret)
+	.getContentText())
+      .access_token;
     insertHeader(); // insert top header to spreadsheet
-    fetchAndInsertListR({ id: id, nextPage: '', listArray: [], bearerToken: bearerToken }); // call recusive fetch; TODO: add list name to source object
-//    resizeColumns(); // not available in new Google Spreadsheet yet
+    // call recusive fetch; TODO: add list name to source object
+    fetchAndInsertListR({ id: id, nextPage: '', listArray: [], bearerToken: bearerToken });
+    // resizeColumns(); // not available in new Google Spreadsheet yet
   }
 }
 // END: buttonHandler()
@@ -213,10 +229,10 @@ function fetchList(id) {
   var bearerToken = JSON.parse(
     UrlFetchApp.fetch(
       identityUrl
-      + 'oauth/token?grant_type=client_credentials&client_id='
-      + consumerKey
-      + '&client_secret='
-      + consumerSecret
+	+ 'oauth/token?grant_type=client_credentials&client_id='
+	+ consumerKey
+	+ '&client_secret='
+	+ consumerSecret
     ).getContentText()
   ).access_token;
   var requestUrl = restEndpoint + 'v1/list/' + id + '/leads.json' + '?access_token=' + bearerToken;
@@ -260,19 +276,25 @@ function fetchAndInsertListR(args) {
   }
   // else, make a request
   else {
-    // grab another page
     var listArray = [];
-    var requestUrl = restEndpoint + 'v1/list/' + args.id + '/leads.json'
-    + '?access_token=' + args.bearerToken;
+    var requestUrl = restEndpoint +
+      'v1/list/' +
+      args.id +
+      '/leads.json' +
+      '?access_token=' +
+      args.bearerToken;
+    // if passed next page token, append it
     if (args.nextPage != '') {
       requestUrl += '&nextPageToken=' + args.nextPage;
     }
     var response = UrlFetchApp.fetch(requestUrl);
     var parsedResponse = JSON.parse(response.getContentText());
     if (parsedResponse.success != true) {
-      throw new Error('The API request failed.' + '\n' + parsedResponse.errors[0].code + '\n' + parsedResponse.errors[0].message);
+      throw new Error('The API request failed.' + '\n' +
+		      parsedResponse.errors[0].code + '\n' +
+		      parsedResponse.errors[0].message);
     }
-    // if this page was not empty...
+    // if this result was not empty...
     else if (parsedResponse.result.length > 0) {
       // construct the array from the response
       for (var n in parsedResponse.result) {

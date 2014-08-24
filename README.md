@@ -30,7 +30,7 @@ Setup (*IMPORTANT*)
    or from File -> New.
 3. Paste the code from
    [mkto_spreadsheet-lists.gs]
-   (https://github.com/Elixiter/mkto_google-spreadsheet/blob/master/mkto_spreadsheet-lists.gs)
+   (https://raw.githubusercontent.com/Elixiter/mkto_google-spreadsheet/master/mkto_spreadsheet-lists.gs)
    into the editor. Make sure you paste over any sample code in the editor.
 4. Configure the script by replacing the
    "REPLACE_ME" strings in the configuration
