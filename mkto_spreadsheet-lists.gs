@@ -78,10 +78,6 @@ var consumerSecret = 'REPLACE_ME'; // Marketo REST API client secret
 
 // when the document is opened, create the top menu
 function onOpen() {
-  if (!isConfigured()) {
-    throw new Error('You have not entered your REST API credentials.' + '\n' +
-		    'Please follow the configuration instructions.');
-  }
   var ui = SpreadsheetApp.getUi();
   var menu = ui.createMenu('Marketo Import');
   menu.addItem('Initialize sidebar...', 'initializeSidebar');
@@ -108,6 +104,10 @@ function isConfigured() {
 }
 
 function initializeSidebar() {
+  if (!isConfigured()) {
+    throw new Error('You have not entered your REST API credentials.' + '\n' +
+		    'Please follow the mkto_google-spreadsheet configuration instructions.');
+  }
   var scriptProperties = PropertiesService.getScriptProperties();
   // create hidden fields to cache authentication token
   var tokenField = scriptProperties.setProperty('tokenValue', '');
