@@ -89,43 +89,51 @@ function onOpen() {
 // END: onOpen()
 
 function initializeSidebar() {
-  var lists = fetchLists();
+  var scriptProperties = PropertiesService.getScriptProperties();
+  // create hidden fields to cache authentication token
+  var tokenField = scriptProperties.setProperty('tokenValue', '');
+  var timeStampField = scriptProperties.setProperty('tokenTimeStamp', '');
+  var expiryField = scriptProperties.setProperty('tokenExpiry', '9999');
+  var lists = fetchListsR();
   createSidebar(lists);
 }
 // END: initializeSidebar()
 
-// fetch list names from the REST API
-// CAVEAT: returns only the first 100 lists
-// TODO: recurse to fetch all lists
-function fetchLists() {
-  var listsArray = [];
-  var bearerToken = JSON.parse(
-    UrlFetchApp
-      .fetch(
-	identityUrl +
-	  'oauth/token?grant_type=client_credentials&client_id=' +
-	  consumerKey +
-	  '&client_secret=' +
-	  consumerSecret)
-      .getContentText())
-    .access_token;
+function fetchListsR(args) {
+  var args = args || {};
+  var listsArray = args.listsArray || [];
+  var rest = new MktoClient();
+  var bearerToken = rest.getToken();
   var requestUrl = restEndpoint + 'v1/lists.json' + '?access_token=' + bearerToken;
-  var response = UrlFetchApp.fetch(requestUrl);
-  var parsedResponse = JSON.parse(response.getContentText());
-  if (parsedResponse.success != true) {
-    throw new Error('The API request failed.' + '\n' +
-		    parsedResponse.errors[0].code + '\n' +
-		    parsedResponse.errors[0].message);
+  // if passed a next page token
+  if (args.nextPage) {
+    requestUrl += '&nextPageToken=' + args.nextPage;
   }
-  for (var n in parsedResponse.result) {
+  var response = UrlFetchApp.fetch(requestUrl);
+  var content = response.getContentText();
+  var parsed = JSON.parse(content);
+  if (parsed.success != true) {
+    throw new Error('The API request failed.' + '\n' +
+		    parsed.errors[0].code + '\n' +
+		    parsed.errors[0].message);
+  }
+  for (var n = 0; n < parsed.result.length; n++) {
     listsArray.push({
-      id : parsedResponse.result[n].id,
-      name : parsedResponse.result[n].name
+      id: parsed.result[n].id,
+      name: parsed.result[n].name
     });
   }
-  return listsArray;
+  // if there are more lists...
+  if (parsed.nextPageToken) {
+    // recurse
+    fetchListsR({ listsArray: listsArray, nextPage: parsed.nextPageToken });
+  }
+  // done recursing
+  else {
+    return listsArray;
+  }
 }
-// END: fetchLists()
+// END: fetchListsR()
 
 // create sidebar to display list names and ID's
 // also includes 'insert' button to copy the list to the current spreadsheet
@@ -141,14 +149,19 @@ function createSidebar(listsArray) {
   // for each item in lists array, create sidebar element
   // each sidebar element is a HorizontalPanel with a button and two labels
   // entire sidebar is a ScrollPanel containing a VerticalPanel with HorizontalPanels
-  for (var l in listsArray) {
+  for (var l = 0; l < listsArray.length; l++) {
     var horizontal = app.createHorizontalPanel();
     var button = app
       .createButton('Insert')
       .setId(listsArray[l].id); // set button ID to MKTO list ID
     var idLabel = app.createLabel(listsArray[l].id);
     var nameLabel = app.createLabel(listsArray[l].name);
-    var handler = app.createServerHandler('buttonHandler'); // specify handler function
+    // create hidden callback element to pass to button click handler
+    var nameHidden = app.createHidden('nameHidden', listsArray[l].name);
+    app.add(nameHidden);
+    var handler = app
+      .createServerHandler('buttonHandler')
+      .addCallbackElement(nameHidden);
     button.addClickHandler(handler); // attach handler to button click event
     horizontal
       .setVerticalAlignment(UiApp.VerticalAlignment.MIDDLE)
@@ -159,7 +172,7 @@ function createSidebar(listsArray) {
       .add(nameLabel); // add button and labels all at once
     vertical.add(horizontal);
   }
-  // END: for (var l in listsArray)
+  // END: for (l in listsArray)
   scroll.add(vertical);
   app.add(scroll);
   SpreadsheetApp
@@ -188,93 +201,54 @@ function resizeColumns() {
 // END: resizeColumns()
 
 // handle click events from sidebar buttons
-// TODO:  create new sheet with list name
+// TODO: add list name as callback element
 function buttonHandler(eventInfo) {
   var id = eventInfo.parameter.source;
+  var name = eventInfo.parameter.nameHidden;
+  var label = id + ' | ' + name;
   var spreadsheet = SpreadsheetApp.getActiveSpreadsheet();
   var sheet = spreadsheet.getActiveSheet();
   var range = sheet.getDataRange();
+  var sheets = spreadsheet.getSheets();
+  // sheet exists
+  for (var i = 0; i< sheets.length; i++) {
+    if (label == sheets[i].getName()) {
+      throw new Error('Sheet with name: "' + label + '" already exists.');
+    }
+  }
+  // if there is data in the current sheet, create a new one
   if (!range.isBlank()) {
-    throw new Error('You can only insert lists into an empty sheet.' + '\n' +
-		    'Please create a new sheet and try again.');
+    // name is list ID
+    spreadsheet.setActiveSheet(spreadsheet.insertSheet());
+    // update reference to current sheet
+    sheet = spreadsheet.getActiveSheet();
   }
-  else {
-    sheet.setName(id);
-    var bearerToken = JSON.parse(
-      UrlFetchApp
-	.fetch(
-	  identityUrl +
-	    'oauth/token?grant_type=client_credentials&client_id=' +
-	    consumerKey +
-	    '&client_secret=' +
-	    consumerSecret)
-	.getContentText())
-      .access_token;
-    insertHeader(); // insert top header to spreadsheet
-    // call recusive fetch; TODO: add list name to source object
-    fetchAndInsertListR({ id: id, nextPage: '', listArray: [], bearerToken: bearerToken });
-    // resizeColumns(); // not available in new Google Spreadsheet yet
-  }
+  // sheet name is list's: <id> | <name>
+  sheet.setName(label);
+  insertHeader(); // insert top header to spreadsheet
+  // call recusive fetch
+  fetchAndInsertListR({ id: id });
+  // resizeColumns(); // not available in new Google Spreadsheet yet
 }
 // END: buttonHandler()
-
-// DEPRECATED, use fetchAndInsertListR()
-// retrieve list by ID from MKTO REST API
-// returns an array of objects with keys:
-//   id, email, firstName, lastName
-// only returns first page of 100 results
-function fetchList(id) {
-  var listArray = [];
-  // refresh the token
-  var bearerToken = JSON.parse(
-    UrlFetchApp.fetch(
-      identityUrl
-	+ 'oauth/token?grant_type=client_credentials&client_id='
-	+ consumerKey
-	+ '&client_secret='
-	+ consumerSecret
-    ).getContentText()
-  ).access_token;
-  var requestUrl = restEndpoint + 'v1/list/' + id + '/leads.json' + '?access_token=' + bearerToken;
-  var response = UrlFetchApp.fetch(requestUrl);
-  var parsedResponse = JSON.parse(response.getContentText());
-  if (parsedResponse.success != true) {
-    throw new Error('The API request failed.' + '\n' + parsedResponse.errors[0].code + ' ' + parsedResponse.errors[0].message);
-  }
-  for (var n in parsedResponse.result) {
-    listArray.push({
-      id: parsedResponse.result[n].id,
-      email: parsedResponse.result[n].email,
-      firstName: parsedResponse.result[n].firstName,
-      lastName: parsedResponse.result[n].lastName
-    });
-  }
-  return listArray;
-}
-// END: fetchList()
 
 // recursive list-grabbing
 // single argument assumed to be an object
 //   to simplify passing multiple named arguments
 // if no nextPage is given, assume it's the
 //   first page and keep on fetching
-// args: {id, nextPage, listArray, bearerToken}
+// args: {id, nextPage}
 function fetchAndInsertListR(args) {
   var args = args || {};
-  args.id = args.id || -1;
-  args.nextPage = args.nextPage || '';
-  args.listArray = args.listArray || [];
-  args.bearerToken = args.bearerToken || '';
+  var rest = new MktoClient();
+  var bearerToken = rest.getToken();
 
   // called with no id
-  if (args.id == -1 ) {
+  if (!args.id) {
     throw new Error('The list ID is undefined.');
   }
-  // called with no bearer token
-  else if (args.bearerToken == '') {
-    throw new Error('The bearer token is undefined');
-  }
-  // else, make a request
+
+  // there is an id, make a request
   else {
     var listArray = [];
     var requestUrl = restEndpoint +
@@ -282,9 +256,9 @@ function fetchAndInsertListR(args) {
       args.id +
       '/leads.json' +
       '?access_token=' +
-      args.bearerToken;
+      bearerToken;
     // if passed next page token, append it
-    if (args.nextPage != '') {
+    if (args.nextPage) {
       requestUrl += '&nextPageToken=' + args.nextPage;
     }
     var response = UrlFetchApp.fetch(requestUrl);
@@ -297,7 +271,7 @@ function fetchAndInsertListR(args) {
     // if this result was not empty...
     else if (parsedResponse.result.length > 0) {
       // construct the array from the response
-      for (var n in parsedResponse.result) {
+      for (var n = 0; n < parsedResponse.result.length; n++) {
 	listArray.push({
 	  id: parsedResponse.result[n].id,
 	  email: parsedResponse.result[n].email,
@@ -308,8 +282,8 @@ function fetchAndInsertListR(args) {
       // insert array directly into the spreadsheet
       insertList(listArray);
       // ...and recurse
-      if (parsedResponse.nextPageToken != undefined) {
-	fetchAndInsertListR({ id: args.id, nextPage: parsedResponse.nextPageToken, listArray: listArray, bearerToken: args.bearerToken });
+      if (parsedResponse.nextPageToken) {
+	fetchAndInsertListR({ id: args.id, nextPage: parsedResponse.nextPageToken, listArray: listArray });
       }
     }
   }
@@ -321,9 +295,76 @@ function fetchAndInsertListR(args) {
 function insertList(list) {
   var spreadsheet = SpreadsheetApp.getActiveSpreadsheet();
   var sheet = spreadsheet.getActiveSheet();
-  for (var entry in list) {
-    var row = list[entry];
+  for (var n = 0; n < list.length; n++) {
+    var row = list[n];
     sheet.appendRow([row.id, row.email, row.firstName, row.lastName]);
   }
 }
 // END: insertList()
+
+
+// manage connecting with Marketo REST API
+var MktoClient = function() {
+
+  // fetch token from REST authentication endpoint
+  var authenticate = function() {
+    var request = identityUrl +
+      'oauth/token?grant_type=client_credentials' +
+      '&client_id=' + consumerKey +
+      '&client_secret=' + consumerSecret;
+    var response = UrlFetchApp.fetch(request);
+    var content = response.getContentText();
+    var parsed = JSON.parse(content);
+    if (parsed.error) {
+      throw new Error('The authentication request failed.' + '\n' +
+		      parsed.error + '\n' +
+		      parsed.error_description);
+    }
+    else {
+      var tokenValue = parsed.access_token;
+      var tokenExpiry = parsed.expires_in; // seconds
+      var tokenTimeStamp = new Date().getTime() / 1000; // now, converted to seconds
+      // construct token object
+      var token = { value: tokenValue, timeStamp: tokenTimeStamp, expiry: tokenExpiry }
+      cacheToken(token);
+      return token;
+    }
+  }
+  // END: authenticate()
+
+  // cache token in hidden fields
+  // expects a token: {value, timeStamp, expiry}
+  var cacheToken = function(tokenObject) {
+    // ensure we are writing strings
+    var value = tokenObject.value || '';
+    var timeStamp = tokenObject.timeStamp || '';
+    var expiry = tokenObject.expiry || '';
+    var scriptProperties = PropertiesService.getScriptProperties();
+    // set the hidden fields
+    //var app = UiApp.getActiveApplication();
+    scriptProperties.setProperty('tokenValue', value);
+    scriptProperties.setProperty('tokenTimeStamp', timeStamp);
+    scriptProperties.setProperty('tokenExpiry', expiry);
+  }
+  // END: cacheToken()
+
+  this.getToken = function() {
+    var app = UiApp.getActiveApplication();
+    var scriptProperties = PropertiesService.getScriptProperties();
+    var tokenValue = scriptProperties.getProperty('tokenValue');
+    var tokenTimeStamp = scriptProperties.getProperty('tokenTimeStamp');
+    var tokenExpiry = scriptProperties.getProperty('tokenExpiry');
+    var currentTime = new Date().getTime() / 1000; // converted to seconds
+    // check if cached token exists, and if it has expired
+    if (tokenValue != '' && tokenTimeStamp != '' && tokenExpiry != '' &&
+	currentTime - tokenTimeStamp < tokenExpiry) {
+      return tokenValue;
+    }
+    else {
+      return authenticate().value;
+    }
+  }
+  // END: getToken()
+
+}
+// END: MktoClient()
