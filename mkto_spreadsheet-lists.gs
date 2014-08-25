@@ -105,8 +105,8 @@ function isConfigured() {
 
 function initializeSidebar() {
   if (!isConfigured()) {
-    throw new Error('You have not entered your REST API credentials.' + '\n' +
-		    'Please follow the mkto_google-spreadsheet configuration instructions.');
+    throw new Error('You have not entered your Marketo REST API credentials.' + '\n' +
+		    'Please configure mkto_google-spreadsheet.');
   }
   var scriptProperties = PropertiesService.getScriptProperties();
   // create hidden fields to cache authentication token
