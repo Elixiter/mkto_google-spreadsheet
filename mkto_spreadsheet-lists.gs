@@ -85,24 +85,6 @@ function onOpen() {
 }
 // END: onOpen()
 
-function isConfigured() {
-  if (restEndpoint == 'REPLACE_ME') {
-    return false;
-  }
-  else if ( identityUrl == 'REPLACE_ME') {
-    return false;
-  }
-  else if ( consumerKey == 'REPLACE_ME') {
-    return false;
-  }
-  else if ( consumerSecret == 'REPLACE_ME') {
-    return false;
-  }
-  else {
-    return true;
-  }
-}
-
 function initializeSidebar() {
   if (!isConfigured()) {
     throw new Error('You have not entered your Marketo REST API credentials.' + '\n' +
@@ -387,3 +369,22 @@ var MktoClient = function() {
 
 }
 // END: MktoClient()
+
+function isConfigured() {
+  if (restEndpoint == 'REPLACE_ME') {
+    return false;
+  }
+  else if ( identityUrl == 'REPLACE_ME') {
+    return false;
+  }
+  else if ( consumerKey == 'REPLACE_ME') {
+    return false;
+  }
+  else if ( consumerSecret == 'REPLACE_ME') {
+    return false;
+  }
+  else {
+    return true;
+  }
+}
+// END: isConfigured()
