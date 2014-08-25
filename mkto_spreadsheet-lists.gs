@@ -31,19 +31,20 @@
 
 // Usage
 // -----
-// 1. From a Spreadsheet file with the script
+// 1. Refresh the Spreadsheets window after editing script.
+// 2. From the open Spreadsheet with the script
 //    included, click the custom "Marketo Import"
 //    menu item, and click "Initialize sidebar...". If there
-//    is no menu item titled "Marketo Import", please make sure
-//    you have followed all of the steps in Setup. In particular,
-//    ensure that the script is present in the script editor for the
-//    current document, and that you have filled in your API credentials.
-// 2. The first time you run it, you must give authorization to
+//    is no menu item titled "Marketo Import", refresh the page, and
+//    please make sure you have followed all of the steps in Setup.
+//    In particular, ensure that the script is present in the script editor
+//    for the current document, and that you have filled in your API credentials.
+// 3. The first time you run it, you must give authorization to
 //    make external http requests.
-// 3. A right-hand sidebar should appear with the names
+// 4. A right-hand sidebar should appear with the names
 //    and IDs of the lists fetched from Marketo.
-// 4. Each list has an "Insert" button. Click it to insert
-//    all members of the list.
+// 5. Each list has an "Insert" button. Click it to insert
+//    all members of the list into a new spreadsheet.
 
 // Caveats / Todo
 // --------------
@@ -51,21 +52,17 @@
 //    is able to *read* the script, which contains
 //    your REST API credentials (ID and secret key) in-the-clear.  
 //    **DO NOT POST YOUR API CREDENTIALS PUBLICALLY!**
-// 2. Currently, you can only fetch the first 100 lists in the sidebar. Fetching all
-//    lists is an upcoming feature.
-// 3. The script does not attempt to "update" or "synchronize" the lists,
-//    it currently only appends to a blank sheet.
-//    Updating lists is a planned feature.
-// 4. I am using the atomic Sheet.appendRow() method to add each row, which is safe
+// 2. The script does not attempt to "update" or "synchronize" the lists,
+//    it currently only creates new sheets. Updating lists is a planned feature.
+// 3. I am using the atomic Sheet.appendRow() method to add each row, which is safe
 //    but slow. Planned migration to Range.setValues() for performance.
-// 5. If you exceed the API quota of 100 requests per 20 seconds, you will receive
+// 4. If you exceed the API quota of 100 requests per 20 seconds, you will receive
 //    an error message. This script does not currently support fetching lists
 //    of greater than 10k leads, as it has no regulator to prevent reaching
 //    the API limit and no way to resume fetching a list in the middle.
-// 6. The UX is quite poor: there are no status or loading indicators. Improving
+// 5. The UX is quite poor: there are no status or loading indicators. Improving
 //    this is on the long-term roadmap.
-// 7. I should really store the bearer token in a Hidden instead of passing it
-//    as an argument.
+
 
 // END: frontmatter
 // ==================================================
@@ -81,12 +78,34 @@ var consumerSecret = 'REPLACE_ME'; // Marketo REST API client secret
 
 // when the document is opened, create the top menu
 function onOpen() {
+  if (!isConfigured()) {
+    throw new Error('You have not entered your REST API credentials.' + '\n' +
+		    'Please follow the configuration instructions.');
+  }
   var ui = SpreadsheetApp.getUi();
   var menu = ui.createMenu('Marketo Import');
   menu.addItem('Initialize sidebar...', 'initializeSidebar');
   menu.addToUi();
 }
 // END: onOpen()
+
+function isConfigured() {
+  if (restEndpoint == 'REPLACE_ME') {
+    return false;
+  }
+  else if ( identityUrl == 'REPLACE_ME') {
+    return false;
+  }
+  else if ( consumerKey == 'REPLACE_ME') {
+    return false;
+  }
+  else if ( consumerSecret == 'REPLACE_ME') {
+    return false;
+  }
+  else {
+    return true;
+  }
+}
 
 function initializeSidebar() {
   var scriptProperties = PropertiesService.getScriptProperties();
