@@ -127,7 +127,7 @@ function createSidebar(listsArray) {
       .createButton('Import') // button label
       .setId(listsArray[l].id); // set button ID to MKTO list ID
     var idLabel = app.createLabel(listsArray[l].id);
-    var nameLabel = app.createLabel(listsArray[l].name);
+    var nameLabel = app.createLabel(listsArray[l].programName + '.' + listsArray[l].name);
     // create hidden callback element to pass to button click handler
     var nameHidden = app.createHidden('nameHidden', listsArray[l].name);
     app.add(nameHidden);
@@ -328,7 +328,8 @@ var MktoClient = function() {
     for (var n = 0; n < parsed.result.length; n++) {
       listsArray.push({
 	id: parsed.result[n].id,
-	name: parsed.result[n].name
+	name: parsed.result[n].name,
+	programName: parsed.result[n].programName
       });
     }
     // if there are more lists...
