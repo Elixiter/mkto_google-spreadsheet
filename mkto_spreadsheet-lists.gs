@@ -63,7 +63,6 @@
 // 5. The UX is quite poor: there are no status or loading indicators. Improving
 //    this is on the long-term roadmap.
 
-
 // END: frontmatter
 // ==================================================
 
@@ -76,7 +75,8 @@ var consumerKey = 'REPLACE_ME'; // Marketo REST API client ID
 var consumerSecret = 'REPLACE_ME'; // Marketo REST API client secret
 // END: configuration
 
-// when the document is opened, create the top menu
+// triggered when the document is opened
+// create the top menu
 function onOpen() {
   var ui = SpreadsheetApp.getUi();
   var menu = ui.createMenu('Marketo Import');
@@ -85,21 +85,27 @@ function onOpen() {
 }
 // END: onOpen()
 
+// initialize application
 function initializeSidebar() {
+  // check if config variables have been set
   if (!isConfigured()) {
     throw new Error('You have not entered your Marketo REST API credentials.' + '\n' +
 		    'Please configure mkto_google-spreadsheet.');
   }
+  // persistent key-value store
   var scriptProperties = PropertiesService.getScriptProperties();
   // create hidden fields to cache authentication token
   var tokenField = scriptProperties.setProperty('tokenValue', '');
   var timeStampField = scriptProperties.setProperty('tokenTimeStamp', '');
-  var expiryField = scriptProperties.setProperty('tokenExpiry', '9999');
+  var expiryField = scriptProperties.setProperty('tokenExpiry', '');
+  // fetch listsArray: [{id, name}, ..., {id, name}]
   var lists = fetchListsR();
   createSidebar(lists);
 }
 // END: initializeSidebar()
 
+// fetch list names from REST API
+// returns an array of list objects with {id, name}
 function fetchListsR(args) {
   var args = args || {};
   var listsArray = args.listsArray || [];
@@ -141,7 +147,7 @@ function fetchListsR(args) {
 function createSidebar(listsArray) {
   var app = UiApp
     .createApplication()
-    .setTitle('Marketo Lists (first 100 only)');
+    .setTitle('Marketo Lists');
   var scroll = app
     .createScrollPanel()
     .setHeight('100%')
