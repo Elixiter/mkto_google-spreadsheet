@@ -80,13 +80,13 @@ var consumerSecret = 'REPLACE_ME'; // Marketo REST API client secret
 function onOpen() {
   var ui = SpreadsheetApp.getUi();
   var menu = ui.createMenu('Marketo Import');
-  menu.addItem('Initialize sidebar...', 'initializeSidebar');
+  menu.addItem('Initialize...', 'initialize');
   menu.addToUi();
 }
 // END: onOpen()
 
 // initialize application
-function initializeSidebar() {
+function initialize() {
   // check if config variables have been set
   if (!isConfigured()) {
     throw new Error('You have not entered your Marketo REST API credentials.' + '\n' +
@@ -99,103 +99,110 @@ function initializeSidebar() {
   var timeStampField = scriptProperties.setProperty('tokenTimeStamp', '');
   var expiryField = scriptProperties.setProperty('tokenExpiry', '');
   // fetch listsArray: [{id, name}, ..., {id, name}]
-  var lists = fetchListsR();
+  var mkto = new MktoClient();
+  var lists = mkto.getLists();
   createSidebar(lists);
 }
-// END: initializeSidebar()
-
-// fetch list names from REST API
-// returns an array of list objects with {id, name}
-function fetchListsR(args) {
-  var args = args || {};
-  var listsArray = args.listsArray || [];
-  var rest = new MktoClient();
-  var bearerToken = rest.getToken();
-  var requestUrl = restEndpoint + 'v1/lists.json' + '?access_token=' + bearerToken;
-  // if passed a next page token
-  if (args.nextPage) {
-    requestUrl += '&nextPageToken=' + args.nextPage;
-  }
-  var response = UrlFetchApp.fetch(requestUrl);
-  var content = response.getContentText();
-  var parsed = JSON.parse(content);
-  if (parsed.success != true) {
-    throw new Error('The API request failed.' + '\n' +
-		    parsed.errors[0].code + '\n' +
-		    parsed.errors[0].message);
-  }
-  for (var n = 0; n < parsed.result.length; n++) {
-    listsArray.push({
-      id: parsed.result[n].id,
-      name: parsed.result[n].name
-    });
-  }
-  // if there are more lists...
-  if (parsed.nextPageToken) {
-    // recurse
-    fetchListsR({ listsArray: listsArray, nextPage: parsed.nextPageToken });
-  }
-  // done recursing
-  else {
-    return listsArray;
-  }
-}
-// END: fetchListsR()
+// END: initialize()
 
 // create sidebar to display list names and ID's
 // also includes 'insert' button to copy the list to the current spreadsheet
 function createSidebar(listsArray) {
+  // create the sidebar application
   var app = UiApp
     .createApplication()
     .setTitle('Marketo Lists');
+  // create scrolling container
   var scroll = app
     .createScrollPanel()
     .setHeight('100%')
     .setWidth('100%');
+  // create scrolling container's long child panel
   var vertical = app.createVerticalPanel();
-  // for each item in lists array, create sidebar element
+  // for each item in lists array, create a sidebar element
   // each sidebar element is a HorizontalPanel with a button and two labels
-  // entire sidebar is a ScrollPanel containing a VerticalPanel with HorizontalPanels
   for (var l = 0; l < listsArray.length; l++) {
     var horizontal = app.createHorizontalPanel();
     var button = app
-      .createButton('Insert')
+      .createButton('Import') // button label
       .setId(listsArray[l].id); // set button ID to MKTO list ID
     var idLabel = app.createLabel(listsArray[l].id);
     var nameLabel = app.createLabel(listsArray[l].name);
     // create hidden callback element to pass to button click handler
     var nameHidden = app.createHidden('nameHidden', listsArray[l].name);
     app.add(nameHidden);
+    // create click handler for button
     var handler = app
-      .createServerHandler('buttonHandler')
-      .addCallbackElement(nameHidden);
+      .createServerHandler('buttonHandler') // declare callback
+      .addCallbackElement(nameHidden); // attach list name to callback to rename sheet
     button.addClickHandler(handler); // attach handler to button click event
+    // set sidebar element format options
     horizontal
       .setVerticalAlignment(UiApp.VerticalAlignment.MIDDLE)
-      .setSpacing(10); // set panel format options
+      .setSpacing(10);
+    // add button and labels to sidebar element
     horizontal
       .add(button)
       .add(idLabel)
-      .add(nameLabel); // add button and labels all at once
+      .add(nameLabel);
+    // add sidebar element to panel
     vertical.add(horizontal);
   }
   // END: for (l in listsArray)
+  // add long panel to scrolling panel
   scroll.add(vertical);
+  // add sidebar to app
   app.add(scroll);
+  // display sidebar
   SpreadsheetApp
     .getUi()
-    .showSidebar(app); // finally, display the sidebar
+    .showSidebar(app);
 }
 // END: createSidebar()
 
+// handle click events from sidebar buttons
+// button corresponds by id to specific Marketo list
+function buttonHandler(eventInfo) {
+  var id = eventInfo.parameter.source; // id of list
+  var name = eventInfo.parameter.nameHidden; // name of list
+  var label = id + ' | ' + name; // name of sheet to be created
+  var spreadsheet = SpreadsheetApp.getActiveSpreadsheet();
+  var sheet = spreadsheet.getActiveSheet();
+  var sheets = spreadsheet.getSheets();
+  // check if sheet exists by name
+  for (var i = 0; i< sheets.length; i++) {
+    if (label == sheets[i].getName()) {
+      throw new Error('Sheet with name: "' + label + '" already exists.');
+    }
+  }
+  // select data in current sheet
+  var range = sheet.getDataRange();
+  // if there is data...
+  if (!range.isBlank()) {
+    // create a new sheet
+    spreadsheet.setActiveSheet(spreadsheet.insertSheet());
+    // update reference to current sheet
+    sheet = spreadsheet.getActiveSheet();
+  }
+  sheet.setName(label); // sheet name: <list_id> | <list_name>
+  insertHeader(); // insert top header to spreadsheet
+  // fetch list by id
+  var mkto = new MktoClient();
+  list = mkto.getList({ id: id });
+  insertList(list); // write list to spreadsheet
+  // resizeColumns(); // not available in new Google Spreadsheet yet
+}
+// END: buttonHandler()
+
 function insertHeader() {
   var spreadsheet = SpreadsheetApp.getActiveSpreadsheet();
-  var sheet = spreadsheet.getActiveSheet(); // currently adding to active sheet
+  var sheet = spreadsheet.getActiveSheet();
   sheet.appendRow(['ID', 'Email', 'First Name', 'Last Name']);
-  sheet.setFrozenRows(1); // freeze the first row into a header
+  sheet.setFrozenRows(1); // header row does not scroll
 }
 // END: insertHeader()
 
+// automatically resize (first 4) columns to fit entries
 function resizeColumns() {
   var spreadsheet = SpreadsheetApp.getActiveSpreadsheet();
   var sheet = spreadsheet.getActiveSheet();
@@ -207,98 +214,9 @@ function resizeColumns() {
 }
 // END: resizeColumns()
 
-// handle click events from sidebar buttons
-// TODO: add list name as callback element
-function buttonHandler(eventInfo) {
-  var id = eventInfo.parameter.source;
-  var name = eventInfo.parameter.nameHidden;
-  var label = id + ' | ' + name;
-  var spreadsheet = SpreadsheetApp.getActiveSpreadsheet();
-  var sheet = spreadsheet.getActiveSheet();
-  var range = sheet.getDataRange();
-  var sheets = spreadsheet.getSheets();
-  // sheet exists
-  for (var i = 0; i< sheets.length; i++) {
-    if (label == sheets[i].getName()) {
-      throw new Error('Sheet with name: "' + label + '" already exists.');
-    }
-  }
-  // if there is data in the current sheet, create a new one
-  if (!range.isBlank()) {
-    // name is list ID
-    spreadsheet.setActiveSheet(spreadsheet.insertSheet());
-    // update reference to current sheet
-    sheet = spreadsheet.getActiveSheet();
-  }
-  // sheet name is list's: <id> | <name>
-  sheet.setName(label);
-  insertHeader(); // insert top header to spreadsheet
-  // call recusive fetch
-  fetchAndInsertListR({ id: id });
-  // resizeColumns(); // not available in new Google Spreadsheet yet
-}
-// END: buttonHandler()
-
-// recursive list-grabbing
-// single argument assumed to be an object
-//   to simplify passing multiple named arguments
-// if no nextPage is given, assume it's the
-//   first page and keep on fetching
-// args: {id, nextPage}
-function fetchAndInsertListR(args) {
-  var args = args || {};
-  var rest = new MktoClient();
-  var bearerToken = rest.getToken();
-
-  // called with no id
-  if (!args.id) {
-    throw new Error('The list ID is undefined.');
-  }
-
-  // there is an id, make a request
-  else {
-    var listArray = [];
-    var requestUrl = restEndpoint +
-      'v1/list/' +
-      args.id +
-      '/leads.json' +
-      '?access_token=' +
-      bearerToken;
-    // if passed next page token, append it
-    if (args.nextPage) {
-      requestUrl += '&nextPageToken=' + args.nextPage;
-    }
-    var response = UrlFetchApp.fetch(requestUrl);
-    var parsedResponse = JSON.parse(response.getContentText());
-    if (parsedResponse.success != true) {
-      throw new Error('The API request failed.' + '\n' +
-		      parsedResponse.errors[0].code + '\n' +
-		      parsedResponse.errors[0].message);
-    }
-    // if this result was not empty...
-    else if (parsedResponse.result.length > 0) {
-      // construct the array from the response
-      for (var n = 0; n < parsedResponse.result.length; n++) {
-	listArray.push({
-	  id: parsedResponse.result[n].id,
-	  email: parsedResponse.result[n].email,
-	  firstName: parsedResponse.result[n].firstName,
-	  lastName: parsedResponse.result[n].lastName
-	});
-      }
-      // insert array directly into the spreadsheet
-      insertList(listArray);
-      // ...and recurse
-      if (parsedResponse.nextPageToken) {
-	fetchAndInsertListR({ id: args.id, nextPage: parsedResponse.nextPageToken, listArray: listArray });
-      }
-    }
-  }
-}
-// END: fetchAndInsertListR()
-
 // insert the contents of the list array
 //   into the currently-active sheet
+// TODO: change from appendRow() to setRange() for performance
 function insertList(list) {
   var spreadsheet = SpreadsheetApp.getActiveSpreadsheet();
   var sheet = spreadsheet.getActiveSheet();
@@ -309,9 +227,9 @@ function insertList(list) {
 }
 // END: insertList()
 
-
 // manage connecting with Marketo REST API
 var MktoClient = function() {
+  var that = this;
 
   // fetch token from REST authentication endpoint
   var authenticate = function() {
@@ -319,9 +237,7 @@ var MktoClient = function() {
       'oauth/token?grant_type=client_credentials' +
       '&client_id=' + consumerKey +
       '&client_secret=' + consumerSecret;
-    var response = UrlFetchApp.fetch(request);
-    var content = response.getContentText();
-    var parsed = JSON.parse(content);
+    var parsed = requestJSON({ url: request });
     if (parsed.error) {
       throw new Error('The authentication request failed.' + '\n' +
 		      parsed.error + '\n' +
@@ -336,7 +252,7 @@ var MktoClient = function() {
       cacheToken(token);
       return token;
     }
-  }
+  };
   // END: authenticate()
 
   // cache token in hidden fields
@@ -348,31 +264,138 @@ var MktoClient = function() {
     var expiry = tokenObject.expiry || '';
     var scriptProperties = PropertiesService.getScriptProperties();
     // set the hidden fields
-    //var app = UiApp.getActiveApplication();
     scriptProperties.setProperty('tokenValue', value);
     scriptProperties.setProperty('tokenTimeStamp', timeStamp);
     scriptProperties.setProperty('tokenExpiry', expiry);
-  }
+  };
   // END: cacheToken()
 
-  this.getToken = function() {
+  // send request to URL
+  // return parsed JSON response object
+  var requestJSON = function(args) {
+    var args = args || {};
+    // there is no request URL
+    if (!args.url) {
+      throw new Error('A REST API request was attempted without a URL.');
+    }
+    else {
+      var response = UrlFetchApp.fetch(args.url);
+      var content = response.getContentText();
+      var parsed = JSON.parse(content);
+      return parsed;
+    }
+  };
+  // END: requestJSON()
+
+  // check if token is cached, and return cached or renew and return
+  var getToken = function() {
     var app = UiApp.getActiveApplication();
+    // fetch key/value store
     var scriptProperties = PropertiesService.getScriptProperties();
     var tokenValue = scriptProperties.getProperty('tokenValue');
     var tokenTimeStamp = scriptProperties.getProperty('tokenTimeStamp');
     var tokenExpiry = scriptProperties.getProperty('tokenExpiry');
     var currentTime = new Date().getTime() / 1000; // converted to seconds
-    // check if cached token exists, and if it has expired
+    // if cached token exists, and if it has not expired...
     if (tokenValue != '' && tokenTimeStamp != '' && tokenExpiry != '' &&
 	currentTime - tokenTimeStamp < tokenExpiry) {
+      // return cached value
       return tokenValue;
     }
     else {
+      // return refreshed value
       return authenticate().value;
     }
-  }
+  };
   // END: getToken()
 
+  // fetch the list of marketo lists
+  this.getLists = function(args) {
+    var args = args || {};
+    var listsArray = args.listsArray || [];
+    var bearerToken = getToken();
+    var requestUrl = restEndpoint + 'v1/lists.json' + '?access_token=' + bearerToken;
+    // if passed a next page token
+    if (args.nextPage) {
+      requestUrl += '&nextPageToken=' + args.nextPage;
+    }
+    var parsed = requestJSON({ url: requestUrl });
+    if (parsed.success != true) {
+      throw new Error('The API request failed.' + '\n' +
+		      parsed.errors[0].code + '\n' +
+		      parsed.errors[0].message);
+    }
+    for (var n = 0; n < parsed.result.length; n++) {
+      listsArray.push({
+	id: parsed.result[n].id,
+	name: parsed.result[n].name
+      });
+    }
+    // if there are more lists...
+    if (parsed.nextPageToken) {
+      // recurse
+      return that.getLists({ listsArray: listsArray, nextPage: parsed.nextPageToken });
+    }
+    // done recursing
+    else {
+      return listsArray;
+    }
+  };
+  // END: getLists()
+
+  // fetch a list of leads
+  this.getList = function(args) {
+    var args = args || {};
+    var listArray = args.listArray || [];
+    var bearerToken = getToken();
+    // called with no id
+    if (!args.id) {
+      throw new Error('The list ID is undefined.');
+    }
+    // there is an id, make a request
+    else {
+      var requestUrl = restEndpoint +
+	'v1/list/' +
+	args.id +
+	'/leads.json' +
+	'?access_token=' +
+	bearerToken;
+      // if passed next page token, append it
+      if (args.nextPage) {
+	requestUrl += '&nextPageToken=' + args.nextPage;
+      }
+      // var response = UrlFetchApp.fetch(requestUrl);
+      // var parsedResponse = JSON.parse(response.getContentText());
+      var parsedResponse = requestJSON({ url: requestUrl });
+      if (parsedResponse.success != true) {
+	throw new Error('The API request failed.' + '\n' +
+			parsedResponse.errors[0].code + '\n' +
+			parsedResponse.errors[0].message);
+      }
+      // if request was successful...
+      else {
+	// construct the array from the response
+	for (var n = 0; n < parsedResponse.result.length; n++) {
+	  listArray.push({
+	    id: parsedResponse.result[n].id,
+	    email: parsedResponse.result[n].email,
+	    firstName: parsedResponse.result[n].firstName,
+	    lastName: parsedResponse.result[n].lastName
+	  });
+	}
+	// if there is a next page
+	if (parsedResponse.nextPageToken) {
+	  // recurse
+	  return that.getList({ id: args.id, nextPage: parsedResponse.nextPageToken, listArray: listArray });
+	}
+	// else return the list
+	else {
+	  return listArray;
+	}
+      }
+    }
+  };
+  // END: getList()
 }
 // END: MktoClient()
 
