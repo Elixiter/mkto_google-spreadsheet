@@ -127,9 +127,10 @@ function createSidebar(listsArray) {
       .createButton('Import') // button label
       .setId(listsArray[l].id); // set button ID to MKTO list ID
     var idLabel = app.createLabel(listsArray[l].id);
-    var nameLabel = app.createLabel(listsArray[l].programName + '.' + listsArray[l].name);
+    var name = listsArray[l].programName + '.' + listsArray[l].name;
+    var nameLabel = app.createLabel(name);
     // create hidden callback element to pass to button click handler
-    var nameHidden = app.createHidden('nameHidden', listsArray[l].name);
+    var nameHidden = app.createHidden('nameHidden', name);
     app.add(nameHidden);
     // create click handler for button
     var handler = app
