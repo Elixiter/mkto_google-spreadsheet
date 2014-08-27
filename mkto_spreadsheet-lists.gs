@@ -1,6 +1,25 @@
 // ==================================================
 // BEGIN frontmatter
 
+// mkto_google-spreadsheet
+// =======================
+
+// ![Marketo Static Lists in your Google Spreadsheet]
+// (http://f.cl.ly/items/0e3T470p1i3L14351I3p/mkto_google-spreadsheet.png)
+
+// Import Marketo Static Lists to Google Spreadsheet - and maybe one day,
+// keep them up-to-date - using the [REST API]
+// (http://developers.marketo.com/documentation/rest/) and 
+// [Google Apps Script](https://developers.google.com/apps-script/).
+
+// **NOTE: DO NOT POST YOUR API CREDENTIALS PUBLICALLY!**  
+// **You alone are responsible for the security of your API credentials.**
+
+// This project is a work-in-progress. It is intended for the "new"
+// version of Google Spreadsheet (green check in bottom bar).
+// It is only minimally functional.
+// Please salt heavily, and see the Caveats / Todo section at the bottom of this README.
+
 // Author information
 // ------------------
 // Kyle Halstvedt  
@@ -42,7 +61,7 @@
 // 3. The first time you run it, you must give authorization to
 //    make external http requests.
 // 4. A right-hand sidebar should appear with the names
-//    and IDs of the lists fetched from Marketo.
+//    and IDs of the Static Lists fetched from Marketo.
 // 5. Each list has an "Insert" button. Click it to insert
 //    all members of the list into a new spreadsheet.
 
@@ -52,15 +71,17 @@
 //    is able to *read* the script, which contains
 //    your REST API credentials (ID and secret key) in-the-clear.  
 //    **DO NOT POST YOUR API CREDENTIALS PUBLICALLY!**
-// 2. The script does not attempt to "update" or "synchronize" the lists,
+// 2. The Marketo API currently only permits fetching Static Lists. Sorry,
+//    no Smart Lists. :(
+// 3. The script does not attempt to "update" or "synchronize" the lists,
 //    it currently only creates new sheets. Updating lists is a planned feature.
-// 3. I am using the atomic Sheet.appendRow() method to add each row, which is safe
+// 4. I am using the atomic Sheet.appendRow() method to add each row, which is safe
 //    but slow. Planned migration to Range.setValues() for performance.
-// 4. If you exceed the API quota of 100 requests per 20 seconds, you will receive
+// 5. If you exceed the API quota of 100 requests per 20 seconds, you will receive
 //    an error message. This script does not currently support fetching lists
 //    of greater than 10k leads, as it has no regulator to prevent reaching
 //    the API limit and no way to resume fetching a list in the middle.
-// 5. The UX is quite poor: there are no status or loading indicators. Improving
+// 6. The UX is quite poor: there are no status or loading indicators. Improving
 //    this is on the long-term roadmap.
 
 // END: frontmatter
