@@ -1,5 +1,5 @@
 // ==================================================
-// BEGIN frontmatters
+// BEGIN frontmatter
 
 // mkto_google-spreadsheet
 // =======================
